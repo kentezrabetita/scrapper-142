@@ -18,11 +18,20 @@ app.listen(3000, (req, res) => {
 
 app.get('/login', (req, res) => {
   (async () => {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
-    await page.goto('https://example.com');
-    await page.screenshot({ path: 'example.png' });
+    await page.goto(process.env.LOGIN_URL, {
+      waitUntil: 'networkidle2',
+    });
 
+    await page.type('#username', req.body.username);
+    await page.type('#password', req.body.password);
+    await page.select('select', 'students');
+    await page.click('[type="submit"]');
+    await page.waitForNavigation();
+
+    const cookies = await page.cookies();
+    await res.send(cookies);
     await browser.close();
   })();
 });
